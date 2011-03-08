@@ -1,3 +1,9 @@
+dojo.provide('kgf.lawnchair.adaptors.ServerAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.ServerAdaptor = (function() {
+
 /**
  * ServerAdaptor
  * ===================
@@ -13,9 +19,7 @@
  * NOTE: Initial purpose of this adapter is to use together with session-based server-side storage, for clients that have weak client-side storage support.
  */
 var ServerAdaptor = function(options) {
-	for (var i in LawnchairAdaptorHelpers) {
-		this[i] = LawnchairAdaptorHelpers[i];
-	}
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
 	this.init(options);
 };
 
@@ -79,3 +83,6 @@ ServerAdaptor.prototype = {
         });
 	}
 };
+
+return ServerAdaptor;
+})();

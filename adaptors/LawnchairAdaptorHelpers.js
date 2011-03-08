@@ -1,3 +1,7 @@
+dojo.provide('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.LawnchairAdaptorHelpers = (function() {
+
 /**
  * LawnchairAdaptorHelpers
  * =======================
@@ -55,7 +59,7 @@ var LawnchairAdaptorHelpers = {
 	// Serialize a JSON object as a string.
 	serialize: function(obj) {
 		var r = '';
-		r = JSON.stringify(obj);
+		r = dojo.toJson(obj);
 		return r;
 	},
 
@@ -64,3 +68,6 @@ var LawnchairAdaptorHelpers = {
 		return eval('(' + json + ')');
 	}
 };
+
+return LawnchairAdaptorHelpers;
+})();

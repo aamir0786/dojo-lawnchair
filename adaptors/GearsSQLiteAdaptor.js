@@ -1,3 +1,7 @@
+dojo.provide('kgf.lawnchair.adaptors.GearsSQLiteAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
 // init.js directly included to save on include traffic
 //
 // Copyright 2007, Google Inc.
@@ -88,6 +92,8 @@
 	}
 })();
 
+kgf.lawnchair.adaptors.GearsSQLiteAdaptor = (function() {
+
 /**
  * GearsSQLiteAdaptor
  * ===================
@@ -95,9 +101,7 @@
  *
  */
 var GearsSQLiteAdaptor = function(options) {
-	for (var i in LawnchairAdaptorHelpers) {
-		this[i] = LawnchairAdaptorHelpers[i];
-	}
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
 	this.init(options);
 };
 
@@ -206,3 +210,6 @@ GearsSQLiteAdaptor.prototype = {
 		return this;
 	}
 };
+
+return GearsSQLiteAdaptor;
+})();

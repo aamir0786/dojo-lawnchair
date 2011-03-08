@@ -1,3 +1,9 @@
+dojo.provide('kgf.lawnchair.adaptors.AIRSQLiteAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.AIRSQLiteAdaptor = (function() {
+
 // inline the AIR aliases file, edited to include only what we need
 
 /* AIRAliases.js - Revision: 2.0beta */
@@ -65,9 +71,7 @@ if (window.runtime)
  *
  */
 var AIRSQLiteAdaptor = function(options) {
-	for (var i in LawnchairAdaptorHelpers) {
-		this[i] = LawnchairAdaptorHelpers[i];
-	}
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
 	this.init(options);
 };
 
@@ -269,3 +273,6 @@ AIRSQLiteAdaptor.prototype = {
 		}
 	}
 };
+
+return AIRSQLiteAdaptor;
+})();

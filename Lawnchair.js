@@ -1,3 +1,7 @@
+dojo.provide('kgf.lawnchair.Lawnchair');
+
+kgf.lawnchair.Lawnchair = (function() {
+
 /**
  * Lawnchair
  * =========
@@ -5,28 +9,82 @@
  *
  */
 var Lawnchair = function(opts, cb) {
-    if (typeof cb == 'undefined') throw "Please provide a callback as second parameter to Lawnchair constructor; this shit's async, yo.";
-    if (!JSON || !JSON.stringify) throw "Native JSON functions unavailable - please include http://www.json.org/json2.js or run on a decent browser :P";
-	this.init(opts);
-	cb.call(this);
+	if (typeof cb != 'function') {
+		throw new Error(
+			'Please provide a callback as second parameter to Lawnchair constructor.');
+	}
+	this.init(opts, cb); //pass callback to init so it controls when it's called
 }
 
 Lawnchair.prototype = {
 	
-	init:function(opts) {
-		var adaptors = {
-			'webkit':window.WebkitSQLiteAdaptor,
-			'gears':window.GearsSQLiteAdaptor,
-			'dom':window.DOMStorageAdaptor,
-			'cookie':window.CookieAdaptor,
-			'air':window.AIRSQLiteAdaptor,
-			'userdata':window.UserDataAdaptor,
-			'air-async':window.AIRSQLiteAsyncAdaptor,
-			'blackberry':window.BlackBerryPersistentStorageAdaptor,
-            'couch':window.CouchAdaptor,
-            'server':window.ServerAdaptor
-		};
-		this.adaptor = opts.adaptor ? new adaptors[opts.adaptor](opts) : new DOMStorageAdaptor(opts);
+	//map of adaptors as expected via opts.adaptor,
+	//moved out to the prototype to be far easier to extend.
+	//Note that the map now maps to adaptor module names,
+	//in order to allow for dynamic loading.
+	adaptorNames: {
+		'webkit': 'kgf.lawnchair.adaptors.WebkitSQLiteAdaptor',
+		'gears': 'kgf.lawnchair.adaptors.GearsSQLiteAdaptor',
+		'dom': 'kgf.lawnchair.adaptors.DOMStorageAdaptor',
+		'cookie': 'kgf.lawnchair.adaptors.CookieAdaptor',
+		'air': 'kgf.lawnchair.adaptors.AIRSQLiteAdaptor',
+		'userdata': 'kgf.lawnchair.adaptors.UserDataAdaptor',
+		'air-async': 'kgf.lawnchair.adaptors.AIRSQLiteAsyncAdaptor',
+		'blackberry': 'kgf.lawnchair.adaptors.BlackBerryPersistentStorageAdaptor',
+		'couch': 'kgf.lawnchair.adaptors.CouchAdaptor',
+		'server': 'kgf.lawnchair.adaptors.ServerAdaptor'
+	},
+	
+	//function to choose adaptor.
+	//Returns one of the string values from adaptorNames, or throws.
+	getAdaptor: function(opts) {
+		var
+			adaptorName = opts.adaptor,
+			adaptor = this.adaptorNames[adaptorName];
+		
+		if (!adaptor && adaptorName) {
+			//adaptor was specified, but we don't recognize it.
+			throw new Error('Unrecognized adaptor name specified.');
+		}
+		
+		adaptor = adaptor || this.getDefaultAdaptor();
+		//ensure requested adaptor is loaded (will no-op if it is already)
+		//(using array notation for dynamic dojo.require so builds don't trip)
+		
+		dojo['require'](adaptor);
+		return adaptor;
+	},
+	
+	//function to semi-intelligently choose a default adaptor
+	//(also serves as a halfway-decent override point)
+	//Returns one of the string values from adaptorNames.
+	getDefaultAdaptor: function() {
+		var adaptor;
+		if (window.Storage) {
+			adaptor = 'kgf.lawnchair.adaptors.DOMStorageAdaptor';
+		} else if (window.openDatabase) {
+			adaptor = 'kgf.lawnchair.adaptors.WebkitSQLiteAdaptor';
+		} else if (dojo.isIE > 5) { //yes "ew", but what's a good FD test?
+			adaptor = 'kgf.lawnchair.adaptors.UserDataAdaptor';
+		} else {
+			//fall on window.name fallback in DOMStorageAdaptor
+			console.warn("WARNING: falling back to non-persistent storage");
+			adaptor = 'kgf.lawnchair.adaptors.DOMStorageAdaptor';
+		}
+		return adaptor;
+	},
+	
+	init:function(opts, cb) {
+		opts = opts || {};
+		//consult method(s) for mappings/fallbacks
+		var ctorstr = this.getAdaptor(opts);
+		//since lawnchair now requires a callback parameter, defer until dojo.ready
+		//to make room for dynamic loading of adaptors on-demand.
+		dojo.ready(dojo.hitch(this, function() {
+			var ctor = dojo.getObject(ctorstr);
+			this.adaptor = new ctor(opts);
+			cb.call(this);
+		}));
 	},
 	
 	// Save an object to the store. If a key is present then update. Otherwise create a new record.
@@ -83,3 +141,7 @@ Lawnchair.prototype = {
 	}
 // --
 };
+
+return Lawnchair;
+
+})();

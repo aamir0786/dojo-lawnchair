@@ -1,3 +1,9 @@
+dojo.provide('kgf.lawnchair.adaptors.WebkitSQLiteAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.WebkitSQLiteAdaptor = (function() {
+
 /**
  * WebkitSQLiteAdaptor
  * ===================
@@ -5,9 +11,7 @@
  *
  */
 var WebkitSQLiteAdaptor = function(options) {
-	for (var i in LawnchairAdaptorHelpers) {
-		this[i] = LawnchairAdaptorHelpers[i];
-	}
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
 	this.init(options);
 };
 
@@ -191,3 +195,6 @@ WebkitSQLiteAdaptor.prototype = {
 		});
 	}
 };
+
+return WebkitSQLiteAdaptor;
+})();

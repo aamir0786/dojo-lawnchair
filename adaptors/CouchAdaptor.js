@@ -1,3 +1,9 @@
+dojo.provide('kgf.lawnchair.adaptors.CouchAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.CouchAdaptor = (function() {
+
 /**
  * CouchAdaptor 
  * ============
@@ -5,10 +11,8 @@
  *
  */
 var CouchAdaptor = function(options) {
-    for (var i in LawnchairAdaptorHelpers) {
-        this[i] = LawnchairAdaptorHelpers[i];
-    }
-    this.init(options);
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
+	this.init(options);
 };
 
 // FIXME - should the constructor accept a callback? init of db could take a while..
@@ -83,3 +87,6 @@ CouchAdaptor.prototype = {
         return 'couch'
     }
 };
+
+return CouchAdaptor;
+})();

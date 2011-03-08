@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/document.css">
+		<link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css">
+		<link rel="stylesheet" type="text/css" href="../../../dojox/grid/resources/Grid.css">
+		<link rel="stylesheet" type="text/css" href="../../../dojox/grid/resources/claroGrid.css">
+	</head>
+	<body class="claro">
+		<div id="explorer" style="height:400px"></div>
+		<!--
+			specifically testing OLD declarative syntax here which checks prototype
+			(new syntax Just Works)
+		-->
+		<div id="store" jsId="store" dojoType="kgf.lawnchair.LawnchairStore"></div>
+		<script type="text/javascript" src="../../../dojo/dojo.js"></script>
+		<script type="text/javascript">
+			dojo.require('dojox.data.StoreExplorer');
+			dojo.require('dojo.data.ObjectStore');
+			dojo.require('kgf.lawnchair.LawnchairStore');
+			dojo.require('kgf.lawnchair.tests.testHelpers');
+			
+			//store is intentionally global for super happy fun console time
+			var store;
+			
+			dojo.ready(function() {
+				var
+					se,
+					lcOpts = kgf.lawnchair.tests.testHelpers.getOptsFromQuery();
+				
+				kgf.lawnchair.tests.testHelpers.addInfo('LawnchairStore + StoreExplorer');
+				
+				store = new kgf.lawnchair.LawnchairStore(lcOpts);
+				
+				//hack to force ItemExplorer (right pane of StoreExplorer) to NOT
+				//save a cookie for its tree - which can screw up CookieAdaptor
+				dojo.extend(dojox.data.ItemExplorer, { persist: false });
+				
+				//instantiate a StoreExplorer with a data store adapter
+				se = new dojox.data.StoreExplorer({
+					id: 'se',
+					store: new dojo.data.ObjectStore({objectStore: store})
+				}, dojo.byId('explorer'));
+				se.startup();
+			});
+		</script>
+	</body>
+</html>

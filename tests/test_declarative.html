@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<body>
+		<!--
+			testing both old and new declarative syntax here
+			(old syntax checks prototype; new syntax Just Works)
+			Unfortunately Lawnchair is not supportable declaratively since it
+			requires a callback function as its second parameter!
+		-->
+		<p>Testing LawnchairStore declaratively, using CookieAdaptor.</p>
+		<p>Open the console to see test results.</p>
+		<div id="store15" jsId="store15" dojoType="kgf.lawnchair.LawnchairStore"
+			adaptor="cookie"></div>
+		<div id="store16" data-dojo-Id="store16" data-dojo-type="kgf.lawnchair.LawnchairStore"
+			data-dojo-props="adaptor: 'cookie'"></div>
+		<script type="text/javascript">
+			var djConfig = {
+				parseOnLoad: true,
+				isDebug: true,
+				require: [
+					'dojo.parser',
+					'doh.runner',
+					'kgf.lawnchair.LawnchairStore',
+					'kgf.lawnchair.tests.testHelpers'
+				]
+			};
+		</script>
+		<script type="text/javascript" src="../../../dojo/dojo.js"></script>
+		<script type="text/javascript">
+			dojo.ready(function() {
+				var
+					lcOpts = kgf.lawnchair.tests.testHelpers.getOptsFromQuery(),
+					lcOptsJson = dojo.toJson(lcOpts);
+				
+				function createStoreTest(id) {
+					return function(doh) {
+						var
+							store = dojo.getObject(id),
+							adaptor = store._lc.adaptor;
+						
+						doh.t(store &&
+							adaptor instanceof kgf.lawnchair.adaptors.CookieAdaptor);
+					};
+				}
+				
+				doh.registerGroup('declarative', [
+					{
+						name: 'Declarative LawnchairStore (legacy syntax)',
+						runTest: createStoreTest('store15')
+					},
+					{
+						name: 'Declarative LawnchairStore (1.6+ syntax)',
+						runTest: createStoreTest('store16')
+					}
+				]);
+				//wait for further ready (adaptor module loading) then run tests
+				dojo.ready(dojo.hitch(doh, 'run'));
+			});
+		</script>
+	</body>
+</html>

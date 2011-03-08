@@ -1,3 +1,9 @@
+dojo.provide('kgf.lawnchair.adaptors.UserDataAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.UserDataAdaptor = (function() {
+
 /**
  * UserDataAdaptor
  * ===================
@@ -5,10 +11,8 @@
  *
  */
 var UserDataAdaptor = function(options) {
-    for (var i in LawnchairAdaptorHelpers) {
-        this[i] = LawnchairAdaptorHelpers[i];
-    }
-    this.init(options);
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
+	this.init(options);
 };
 
 UserDataAdaptor.prototype = {
@@ -77,3 +81,6 @@ UserDataAdaptor.prototype = {
 		});
 	}
 };
+
+return UserDataAdaptor;
+})();

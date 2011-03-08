@@ -1,3 +1,9 @@
+dojo.provide('kgf.lawnchair.adaptors.BlackBerryPersistentStorageAdaptor');
+
+dojo.require('kgf.lawnchair.adaptors.LawnchairAdaptorHelpers');
+
+kgf.lawnchair.adaptors.BlackBerryPersistentStorageAdaptor = (function() {
+
 /**
  * BlackBerryPersistentStorageAdaptor
  * ===================
@@ -6,9 +12,7 @@
  *
  */
 var BlackBerryPersistentStorageAdaptor = function(options) {
-	for (var i in LawnchairAdaptorHelpers) {
-		this[i] = LawnchairAdaptorHelpers[i];
-	}
+	dojo.mixin(this, kgf.lawnchair.adaptors.LawnchairAdaptorHelpers);
 	this.init(options);
 };
 
@@ -80,3 +84,6 @@ BlackBerryPersistentStorageAdaptor.prototype = {
 		return (value != null && value[0] == '{' && value[value.length-1] == '}');
 	}
 };
+
+return BlackBerryPersistentStorageAdaptor;
+})();

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+	<body>
+		<p>Open the console to see test results.</p>
+		<script type="text/javascript">
+			djConfig = {
+				isDebug: true, //provide console for e.g. old IEs
+				require: [
+					'doh.runner', //NOTE: this lives in util (src release only)!
+					'kgf.lawnchair.Lawnchair',
+					// test on-demand loading by not requiring adaptors manually
+					'kgf.lawnchair.tests.testHelpers'
+				]
+			}
+		</script>
+		<script type="text/javascript" src="../../../dojo/dojo.js"></script>
+		<script type="text/javascript">
+			var lc;
+			
+			if (!dojo.ready) { dojo.ready = dojo.addOnLoad; } //for testing < 1.4
+			
+			dojo.ready(function() {
+				
+				//functions used in most tests
+				function setUp() {
+					//sets up some globals for use in a test where the last case
+					//tests terse syntax
+					var g = dojo.global;
+					g.testDfd = new doh.Deferred();
+					g.testFunc = function(r) {
+						//this is the last function executed in the test
+						g.testDfd.callback(true);
+					};
+					//also nuke the store since most tests expect this
+					lc.nuke();
+				}
+				function tearDown() {
+					//terminates globals from setUp with extreme prejudice
+					var g = dojo.global;
+					delete g.testFunc;
+					delete g.testDfd;
+				}
+				
+				var Lawnchair = kgf.lawnchair.Lawnchair,
+					lcOpts = kgf.lawnchair.tests.testHelpers.getOptsFromQuery();
+				
+				kgf.lawnchair.tests.testHelpers.addInfo('Lawnchair');
+				
+				doh.registerGroup('Lawnchair', [
+					{
+						name: 'ctor: load adaptor on-demand (async)',
+						runTest: function(doh) {
+							var dfd = new doh.Deferred();
+							
+							//note: this instance is used by future tests as well.
+							//it is purposely global to be accessible later from console.
+							lc = new Lawnchair(lcOpts, function() {
+								var elsee = this;
+								//in Dojo <= 1.5, using the non-xd loader, it seems that
+								//dojo.ready ends up called synchronously.  However, in 1.6,
+								//it doesn't.  The setTimeout below is thus needed for <= 1.5.
+								setTimeout(function() {
+									doh.is(elsee, lc, '`this` in callback is bound to the instance');
+									//signal to doh.Deferred that this callback ran
+									dfd.callback(true);
+								}, 0);
+							});
+							return dfd;
+						}
+					},
+					{
+						name: 'ctor: no callback (throws, as per original Lawnchair)',
+						runTest: function(doh) {
+							var test = {
+								createLawnchair: function() {
+									return new Lawnchair(lcOpts);
+								}
+							};
+							// test raising exception if no ctor callback is supplied
+							doh.e(Error, test, 'createLawnchair', [],
+								'exception raised if no callback supplied to init');
+						}
+					},
+					{
+						name: 'all()',
+						setUp: setUp,
+						tearDown: tearDown,
+						runTest: function(doh) {
+							var length;
+							lc.all(function(items) {
+								doh.t(dojo.isArray(items),
+									'all() callback called with array parameter');
+								length = items.length; //note length now for test later
+								lc.save({ some: 'thing' }, function() {
+									lc.all(function(items) {
+										doh.is(items.length, length + 1,
+											'Items increased by 1 after save of new item');
+										//finally, test terse syntax (where r is the first arg)
+										lc.all('testFunc(r)');
+									});
+								});
+							});
+							return dojo.global.testDfd;
+						}
+					},
+					{
+						name: 'nuke()',
+						setUp: setUp,
+						tearDown: tearDown,
+						runTest: function(doh) {
+							//yes, this is very nesty.  I left it this way specifically
+							//(didn't duplicate the original tests' chain functionality)
+							//in order to illustrate what can easily happen with this kind
+							//of thing.  Go look at test_LawnchairStore.html and bask in the
+							//glory of .then chaining. :)
+							function tests() {
+								lc.all(function(items) {
+									doh.is(items.length, 0, 'all() should return 0 after nuke');
+									lc.save({ some: 'thing' }, function() {
+										lc.nuke(function() {
+											lc.all(function(items) {
+												doh.is(items.length, 0,
+													'should have 0 items again after save + nuke');
+												//finally, test terse syntax (where r is the first arg)
+												lc.nuke('testFunc(r)');
+											});
+										});
+									});
+								});
+							}
+							
+							doh.is(lc.nuke(tests), lc, 'nuke should be chainable');
+							return dojo.global.testDfd;
+						}
+					},
+					{
+						name: 'save()',
+						setUp: setUp,
+						tearDown: tearDown,
+						runTest: function(doh) {
+							var
+								testObj = { some: 'thing' },
+								testKey = 'neversaydie';
+							lc.save(testObj, function(item) {
+								doh.is(testObj, item,
+									'should call callback, passing original (now saved) object');
+								lc.save({ something: 'else' }, function() {
+									lc.all(function(items) {
+										doh.is(items.length, 2,
+											'should have length 2 after 2 unique-key saves');
+										lc.save({ key: testKey, foo: 'bar' }, function(item) {
+											doh.is(item.key, testKey, 'should preserve given key');
+											//finally, test terse syntax (where r is the first arg)
+											lc.save({ key: testKey, foo: 'baz' }, 'testFunc(r)');
+										});
+									});
+								});
+							});
+							return dojo.global.testDfd;
+						}
+					},
+					{
+						name: 'get()',
+						setUp: setUp,
+						tearDown: tearDown,
+						runTest: function(doh) {
+							lc.save({ key: 'xyz123', name: 'tim' }, function() {
+								lc.get('xyz123', function(item) {
+									doh.is(item.name, 'tim',
+										'calling get with an existing key should return expected object');
+									lc.get('inai', function(item) {
+										doh.t(item === null,
+											'nonexistent key should pass null to callback');
+										//finally, test terse syntax (where r is the first arg)
+										lc.get('xyz123', 'testFunc(r)');
+									});
+								});
+							});
+							return dojo.global.testDfd;
+						}
+					},
+					{
+						name: 'find()',
+						setUp: setUp,
+						tearDown: tearDown,
+						runTest: function(doh) {
+							
+							var testObj = { name: 'crash test dummy', crashes: 9000 };
+							
+							//breaking this up a bit since it's ridiculously nesty.
+							//(this is why they DID write that chain function...)
+							function testFilter(item) {
+								return item.name == 'crash test dummy';
+							}
+							function test() {
+								//testing terse syntax for query (again, r is first arg)
+								lc.find('r.name == "crash test dummy"', function(item, idx) {
+									doh.is(item.name, testObj.name,
+										'should return expected record against shorthand filter');
+									//the following test seems to spuriously fail half the time.
+									//Might be implementation-dependent (adaptor or browser).
+									//Proper comparison might be to find manually via all.
+									//doh.t(idx === 0, 'should receive proper index');
+									lc.find(testFilter, function(item, idx) {
+										doh.is(item.name, testObj.name,
+											'should return expected record against function filter');
+										item.crashes = 9001; //WHAT NINE THOUSAND?!
+										lc.save(item, function(item) {
+											lc.find(testFilter, function(item) {
+												doh.is(item.crashes, 9001,
+													'should return updated record data after find+save+find');
+												//finally, test terse syntax (where r is the first arg)
+												lc.find(testFilter, 'testFunc(r)');
+											});
+										});
+									});
+								});
+							}
+							
+							//tests start here, call the func above partway in
+							lc.save(testObj, function() {
+								lc.save({ test: 'something' }, test);
+							});
+							return dojo.global.testDfd;
+						}
+					},
+					{
+						name: 'remove()',
+						setUp: setUp,
+						tearDown: tearDown,
+						runTest: function(doh) {
+							
+							var testKey = 'mykey';
+							
+							//latter half of tests are split out here (wooo nesting)
+							function testRemoveKey() {
+								lc.save({ key: testKey, name: 'two' }, function() {
+									lc.find("r.name == 'two'", function(item) {
+										lc.remove(testKey, function() {
+											lc.all(function(items) {
+												doh.is(items.length, 0,
+													'should have 0 items after save+find+remove(string)');
+												//finally, test terse syntax (where r is the first arg)
+												//NOTE: ported, but how about specifically testing
+												//removing nonexistent items (which this does)?
+												lc.remove(testKey, 'testFunc(r)');
+											});
+										});
+									});
+								});
+							}
+							
+							//tests start here, call function above halfway
+							lc.save({ name: 'one' }, function() {
+								lc.find("r.name == 'one'", function(item) {
+									lc.remove(item, function() {
+										lc.all(function(items) {
+											doh.is(items.length, 0,
+												'should have 0 items after save+find+remove(object)');
+											testRemoveKey(); //rest of the tests are broken out
+										});
+									});
+								});
+							});
+							return dojo.global.testDfd;
+						}
+					},
+					{
+						name: 'Lawnchair helpers',
+						runTests: function(doh) {
+							doh.is(lc.adaptor.uuid().length, 36,
+								'uuid() should create a 36-character string');
+							doh.isNot(lc.adaptor.uuid(), lc.adaptor.uuid(),
+								'consecutive calls to uuid() should generate unique values');
+						}
+					}
+				]);
+				doh.run();
+			});
+		</script>
+	</body>
+</html>
