@@ -104,6 +104,8 @@ dojo.declare('kgf.lawnchair.LawnchairStore', null, {
 				if (o !== null) {
 					throw new Error('Tried to add with an already-existing key!');
 				} else {
+					//ensure identity is set IN object
+					object[this._idProperty] = id;
 					return this._callLawnchair('save', object);
 				}
 			})
