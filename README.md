@@ -1,4 +1,7 @@
-This module contains a modified version of Brian LeRoux's Lawnchair.
+**NOTE:** This package is quite old now; it was written against Dojo 1.6
+(non-AMD) and Lawnchair 0.5.  Currently I have no plans to update this.
+
+This package contains a modified version of Brian LeRoux's Lawnchair.
 
 <https://github.com/brianleroux/lawnchair>
 
